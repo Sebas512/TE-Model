@@ -1,0 +1,111 @@
+Function LinearInterpolation(XPoints, YPoints, XNew) As Double
+'*******************************************************************
+' Linear interpolation from a list of (X,Y) points coordinates.
+' The programs:
+' 1- Sorts the (X,Y) coordinates in order of ascending X.
+' 2- Finds the two surroundings points (or two closest points if X is outside the range).
+' 3- Interpolates or extrapolates the new Y value.
+'
+' Three input arguments:
+'   -XPoints: List of X coordinates
+'   -YPoints: List of Y coordinates
+'   -XNew: New x point for which the y value is calculated
+'
+' NOTES
+'   - The X values can be in any order
+'   - The X and Y selection must have the same length
+'   - If the new X is outside, a linear extrapolation is calculated
+'*******************************************************************
+
+'Define variables
+Dim FirstPoint, LastPoint, NPoints, NInitial, TempX, TempY, i, j As Double
+Dim Point As Variant
+
+
+'Calculation of the number of points. There's probably a better way.
+NPoints = 0
+NInitial = 0
+
+For Each Point In XPoints
+    NInitial = NInitial + 1
+    If XPoints(NInitial) <> "" And YPoints(NInitial) <> "" Then
+        NPoints = NPoints + 1
+    End If
+Next Point
+  
+  
+'Creates a N by 2 matrix. In two steps because you can't define its
+'size with a variable (Npoints).
+Dim XYMatrix() As Double
+ReDim XYMatrix(1 To NPoints, 1 To 2) As Double
+
+
+'Transfer the X and Y coordinates into the matrix.
+'It's easier to manipulation in this format.
+j = 0
+For i = 1 To NInitial
+    If XPoints(i) <> "" And YPoints(i) <> "" Then
+        j = j + 1
+        XYMatrix(j, 1) = XPoints(i)
+        XYMatrix(j, 2) = YPoints(i)
+    End If
+Next i
+
+
+'Sorts the matrix using everybody's favourite sorting algorithm: BUBBLE SORT (or actually a slight variation of it).
+'Basically, I scan X(1) to X(end) and put the smallest value in X(1).
+'Then I scan X(2) to X(end) and put the smallest value in X(2). Etc.
+'It's probably possible to find a less efficient algorithm, but it would be a challenge (yes, I'm
+'just too lazy to code a proper quicksort, so there).
+For i = 1 To NPoints - 1                    'Spot to fill with smallest value
+    For j = i + 1 To NPoints                'Spots to scan
+        If XYMatrix(j, 1) < XYMatrix(i, 1) Then   'If smaller
+            TempX = XYMatrix(i, 1)          'Switch
+            TempY = XYMatrix(i, 2)
+            
+            XYMatrix(i, 1) = XYMatrix(j, 1)
+            XYMatrix(i, 2) = XYMatrix(j, 2)
+            
+            XYMatrix(j, 1) = TempX
+            XYMatrix(j, 2) = TempY
+            
+        End If
+    Next j
+Next i
+            
+       
+'Find where the new X is
+If XNew < XYMatrix(1, 1) Then               'If new X is below the whole range
+    X1 = XYMatrix(1, 1)                     'Extrapolate based on first 2 values
+    Y1 = XYMatrix(1, 2)
+    X2 = XYMatrix(2, 1)
+    Y2 = XYMatrix(2, 2)
+    
+ElseIf XNew > XYMatrix(NPoints, 1) Then     'If nex X i above the whole range
+    X1 = XYMatrix(NPoints - 1, 1)           'Extrapolate based on last 2 values
+    Y1 = XYMatrix(NPoints - 1, 2)
+    X2 = XYMatrix(NPoints, 1)
+    Y2 = XYMatrix(NPoints, 2)
+    
+Else                                        'If new X is within the range
+    For i = 2 To NPoints                    'Interpolate from the surroundings values
+        If XNew <= XYMatrix(i, 1) Then
+            X1 = XYMatrix(i - 1, 1)
+            Y1 = XYMatrix(i - 1, 2)
+            X2 = XYMatrix(i, 1)
+            Y2 = XYMatrix(i, 2)
+            Exit For
+        End If
+    Next i
+End If
+    
+'Interpolate or extrapolate
+LinearInterpolation = Y1 + (Y2 - Y1) / (X2 - X1) * (XNew - X1)
+    
+  
+ 
+End Function
+
+
+
+
