@@ -26,6 +26,7 @@ Dim Point As Variant
 NPoints = 0
 NInitial = 0
 
+'This is just terrible code, I know.
 For Each Point In XPoints
     NInitial = NInitial + 1
     If XPoints(NInitial) <> "" And YPoints(NInitial) <> "" Then
